@@ -9,6 +9,13 @@ const bcrypt = require('bcryptjs');
 // Config the dotenv
 dotenv.config();
 
+// 1. Post Goals Is Not Working
+// 2. Get All Goals Is Not Working
+
+// Not Tested
+// 1. Update Goal
+// 2. Delete Goal
+// 3. Get One Goal
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_STRING, {
@@ -26,7 +33,6 @@ const UserSchema = new mongoose.Schema({
     password: String,
     goals: [{
         title: String,
-        description: String,
         date: Date,
         completed: Boolean
     }]
@@ -95,14 +101,24 @@ app.post('/api/addGoal/:email', function(req, res) {
         if (err) {
             res.json(err);
         } else {
+            if (userFromDB['goals']) {
             userFromDB['goals'].push({
                 title: req.body.title,
-                description: req.body.description,
                 date: Date.now(),
                 completed: false
             });
             userFromDB.save();
             res.json({"msg": "Goal Added"});
+            } else {
+               const arr = {
+                    title: req.body.title,
+                    date: Date.now(),
+                    completed: false
+                };
+                userFromDB['goals'] = [arr];
+                userFromDB.save();
+                res.json({"msg": "Goal Added"});
+            }
         }
     });
 });
@@ -119,7 +135,7 @@ app.get('/api/getGoals/:email', function(req, res) {
 });
 
 // Get One Goal
-app.get('/getOneGoal/:email/:goalId', function(req, res) {
+app.get('/api/getOneGoal/:email/:goalId', function(req, res) {
     User.findOne({ "email": req.params.email }, function(err, userFromDB) {
         if (err) {
             res.json(err);
