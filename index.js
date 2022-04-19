@@ -9,14 +9,6 @@ const bcrypt = require('bcryptjs');
 // Config the dotenv
 dotenv.config();
 
-// 1. Post Goals Is Not Working
-// 2. Get All Goals Is Not Working
-
-// Not Tested
-// 1. Update Goal
-// 2. Delete Goal
-// 3. Get One Goal
-
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_STRING, {
     useNewURLParser: true,
@@ -101,7 +93,7 @@ app.post('/api/addGoal/:email', function(req, res) {
         if (err) {
             res.json(err);
         } else {
-            if (userFromDB['goals']) {
+            if (!null) {
             userFromDB['goals'].push({
                 title: req.body.title,
                 date: Date.now(),
@@ -140,7 +132,11 @@ app.get('/api/getOneGoal/:email/:goalId', function(req, res) {
         if (err) {
             res.json(err);
         } else {
-            res.json(userFromDB.goals[req.params.goalId]);
+            userFromDB['goals'].forEach(goal => {
+                if (goal._id.toString() == req.params.goalId) {
+                    res.json(goal);
+                }
+            });
         };
     });
 });
@@ -151,10 +147,16 @@ app.put('/api/updateGoal/:email/:goalId', function(req, res) {
         if (err) {
             res.json(err);
         } else {
-            userFromDB.goals[req.params.goalId].title = req.body.title;
-            userFromDB.goals[req.params.goalId].description = req.body.description;
-            userFromDB.goals[req.params.goalId].completed = req.body.completed;
-            userFromDB.save();
+            userFromDB['goals'].forEach(goal => {
+                if (goal['_id'].toString() === req.params.goalId) {
+                    goal.set({
+                        title: req.body.title,
+                        date: Date.now(),
+                        completed: goal.completed
+                    });
+                    userFromDB.save();
+                };
+            });
             res.json({"msg": "Goal Updated"});
         }
     });
@@ -166,9 +168,13 @@ app.delete('/api/deleteGoal/:email/:goalId', function(req, res) {
         if (err) {
             res.json(err);
         } else {
-            userFromDB.goals.splice(req.params.goalId, 1);
+            userFromDB['goals'].forEach(goal => {
+                if (goal.id.toString() === req.params.goalId) {
+                    goal.remove();
+                    res.json("Goal Deleted");
+                }
+            });
             userFromDB.save();
-            res.json({"msg": "Goal Deleted"});
         }
     });
 });
